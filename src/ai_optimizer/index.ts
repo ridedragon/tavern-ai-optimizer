@@ -9,7 +9,9 @@ const t = (str: string) => str;
 let app: App | null = null;
 
 function createScriptIdDiv(): JQuery<HTMLDivElement> {
-  return $('<div>').attr('script_id', getScriptId()) as JQuery<HTMLDivElement>;
+  return $('<div>')
+    .attr('id', 'ai_text_optimizer') // 添加 ID
+    .attr('script_id', getScriptId()) as JQuery<HTMLDivElement>;
 }
 
 function destroyScriptIdDiv(): void {
