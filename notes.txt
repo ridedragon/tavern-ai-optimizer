@@ -1,0 +1,56 @@
+# 酒馆助手脚本开发笔记
+
+## 核心概念
+- **脚本库**: 分为全局和局部（角色卡），我们的脚本将作为一个独立的单元在脚本库中管理。
+- **事件驱动**: 通过 `eventOn` 监听酒馆事件 (如 `tavern_events.CHARACTER_MESSAGE_RENDERED`) 来触发函数。
+- **变量系统**: 强大的变量管理器，可以按作用域（`global`, `character`, `chat`, `script`）存储数据。我们将使用 `script` 作用域来保存设置。
+- **集成UI**: 可以在消息楼层或通过脚本库设置界面来创建前端 UI。模板提供了 Vue 的支持。
+
+## 关键 API
+
+### 消息操作
+- `getChatMessages(range, options)`: 获取聊天消息数组。用于找到需要处理的最后一条角色消息。
+  - `range`: 可以是 ` -1` (最新一条) 或 `-2` (倒数第二条) 等。
+- `setChatMessages(messages, options)`: **核心功能**。用于修改一个或多个消息的内容。
+  - `messages`: 数组，每个对象包含 `message_id` 和要修改的字段（如 `message`）。
+  - `options.refresh`: 设置为 `'affected'` 可以只刷新被修改的楼层，体验更好。
+  - **这是实现“在原消息中替换句子”的关键。**
+- `getLastMessageId()`: 获取最新消息的 ID。
+
+### 事件处理
+- `eventOn(event_type, listener)`: 注册一个事件监听器。
+  - `event_type`: 我们主要关心 `tavern_events.CHARACTER_MESSAGE_RENDERED`，这个事件在消息完全显示后触发，比 `MESSAGE_RECEIVED` 更可靠。
+- `getButtonEvent(button_name)`: 获取在脚本设置中创建的按钮的点击事件名称，然后用 `eventOn` 监听它。
+
+### AI 生成
+- `generate(config)`: **核心功能**。一个高度集成的函数，用于请求 AI 生成内容。
+  - `config.user_input`: 要发送给 AI 的内容。
+  - `config.overrides`: 可以覆盖角色描述、人格等。
+  - `config.injects`: 可以在生成时注入额外的提示词。
+  - **这将完全替代旧扩展中所有手动的 `fetch` 和 API 调用逻辑，极大简化代码。**
+
+### 变量与设置
+- `getVariables({ type: 'script' })`: 获取当前脚本的变量（我们的设置）。
+- `replaceVariables(variables, { type: 'script' })`: 完全替换脚本的变量（保存设置）。
+- `updateVariablesWith(updater, { type: 'script' })`: 使用函数更新变量，更安全。
+- `getScriptId()`: 获取当前脚本的 ID，在操作变量时需要。
+
+### UI 和工具
+- `toastr`: 显示通知（`toastr.info`, `toastr.success`, `toastr.error`）。
+- `_` (Lodash): 内置的强大的工具库，用于处理数组和对象。
+- **Vue 组件**: 模板支持使用 `.vue` 文件创建设置界面，这是最理想的方式。我们需要研究模板中的 `设置界面.vue` 示例。
+- `replaceScriptButtons`: 动态修改脚本在UI上显示的按钮。
+
+## 移植策略
+1.  **UI**: 使用 Vue 组件 (`.vue` 文件) 重建 `Panel.vue` 的设置界面。参考 `tavern_helper_template/src/脚本示例/设置界面.vue`。
+2.  **设置**: 使用 `script` 作用域的变量来存储所有设置（API密钥、禁用词、提示词等）。在 Vue 组件加载时读取，在用户修改时保存。
+3.  **自动优化**:
+    - 使用 `eventOn(tavern_events.CHARACTER_MESSAGE_RENDERED, ...)` 监听新消息。
+    - 在回调中，使用 `getChatMessages(-1)` 获取最新消息。
+    - 执行与旧扩展类似的逻辑：文本清理、检查禁用词、提取句子。
+    - 使用 `generate()` 函数将待优化内容发送给 AI。
+    - 使用 `setChatMessages()` 将优化后的句子替换回原消息。
+4.  **手动优化**:
+    - 在 Vue 设置界面中添加按钮。
+    - 按钮点击后，执行与自动优化类似的提取、`generate`、`setChatMessages` 流程。
+5.  **消息替换逻辑**: 严格按照用户要求，只替换句子。需要编写一个函数，接收原始消息、原始句子数组、优化后句子数组，然后精确地在原始消息中进行替换，生成最终的新消息文本，最后通过 `setChatMessages` 更新。
