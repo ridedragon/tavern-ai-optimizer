@@ -140,11 +140,9 @@
 
 <script setup lang="ts">
 import CustomSlider from './components/CustomSlider.vue';
+import { useSettingsStore } from './store/settings';
+import { storeToRefs } from 'pinia';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { getSettings, saveSettings, defaultSettings, Settings } from './settings';
-// 核心逻辑将在下一个步骤中创建
-// import { fetchModelsFromApi, testApiConnection, manualOptimize, optimizeText, replaceMessage, getLastCharMessage, checkMessageForDisabledWords } from './core';
-
 import {
   fetchModelsFromApi,
   testApiConnection,
@@ -156,7 +154,7 @@ import {
   handleFullAutoOptimize,
 } from './core';
 
-const settings = ref<Settings>(defaultSettings);
+const { settings } = storeToRefs(useSettingsStore());
 const modelList = ref<string[]>([]);
 const connectionStatus = ref<'unknown' | 'success' | 'error'>('unknown');
 const activePrompt = ref<'main' | 'system' | 'final_system'>('main');
@@ -166,15 +164,6 @@ const modifiedMessage = ref('');
 const lastCharMessageContent = ref('');
 let messagePollingInterval: number | undefined;
 let lastProcessedMessage = ref('');
-
-// 监听设置变化并保存
-watch(
-  settings,
-  newSettings => {
-    saveSettings(newSettings);
-  },
-  { deep: true },
-);
 
 // 监听最后一条角色消息的变化，以触发自动优化
 watch(lastCharMessageContent, (newMessage, oldMessage) => {
@@ -249,10 +238,7 @@ const handleTestConnection = async () => {
   }
 };
 
-onMounted(async () => {
-  // 加载设置
-  settings.value = await getSettings();
-
+onMounted(() => {
   if (settings.value.autoFetchModels) {
     fetchModels();
   }
