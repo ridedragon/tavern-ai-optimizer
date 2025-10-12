@@ -96,7 +96,6 @@ onUnmounted(() => {
   align-items: center;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
-  border: 2px solid red; /* 调试边框 */
 }
 
 .track {

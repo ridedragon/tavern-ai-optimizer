@@ -33,7 +33,7 @@ interface Entry {
 
 const config: Config = {
   port: 6621,
-  entries: [{ script: 'src/ai_optimizer/index.ts', html: 'src/ai_optimizer/index.html' }],
+  entries: [{ script: 'src/ai_optimizer/index.ts' }],
 };
 
 let io: Server;
