@@ -315,7 +315,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           dts: true,
           syncMode: 'overwrite',
           resolvers: [VueUseComponentsResolver(), VueUseDirectiveResolver()],
-          globs: ['src/ai_optimizer/components/*.vue'],
+          // globs: ['src/panel/component/*.vue'],
         }),
         new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
         new webpack.DefinePlugin({
