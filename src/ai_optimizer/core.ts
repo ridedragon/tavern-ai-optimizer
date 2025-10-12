@@ -292,10 +292,56 @@ export async function getLastCharMessage(): Promise<string> {
 // 模拟旧扩展的 API 调用函数，以便 Panel.vue 可以使用
 // 在新架构中，我们直接使用 `generate`，但为了兼容 Panel.vue 的结构，我们保留这些。
 export async function fetchModelsFromApi(): Promise<string[]> {
-  // 酒馆助手没有直接获取模型列表的 API，此功能暂时无法完美实现。
-  // 我们可以返回一个预设列表或让用户手动输入。
-  showToast('info', '酒馆助手脚本模式下无法自动获取模型列表。');
-  return ['gpt-4', 'gpt-3.5-turbo', 'claude-3-opus-20240229', 'gemini-pro'];
+  const settings = await getSettings();
+  const { apiProvider, apiUrl, apiKey } = settings;
+
+  let url: string;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  switch (apiProvider) {
+    case 'openai':
+    case 'openai_test':
+      url = `${apiUrl}/models`;
+      if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+      break;
+    case 'google':
+      // Google AI Studio / Vertex AI aPIs are more complex.
+      // For now, we'll return a common list and let the user configure.
+      showToast('info', 'Google 模型需要手动配置。');
+      return ['gemini-pro', 'gemini-1.5-pro-latest'];
+    case 'sillytavern_backend':
+    case 'sillytavern_preset':
+      showToast('info', 'SillyTavern 模型列表请在主界面配置。');
+      // We can't easily fetch this list from a script.
+      return [];
+    default:
+      showToast('error', '未知的 API 提供商。');
+      return [];
+  }
+
+  try {
+    const response = await fetch(url, { method: 'GET', headers });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    // OpenAI-compatible APIs usually return a list of objects with an 'id' field.
+    const models = data.data?.map((model: any) => model.id) || [];
+    if (models.length === 0) {
+      // Fallback for non-standard APIs that might just return a list of strings
+      const flatModels = data.map((model: any) => (typeof model === 'string' ? model : model.id)).filter(Boolean);
+      if (flatModels.length > 0) return flatModels;
+    }
+    return models;
+  } catch (error) {
+    console.error('[AI Optimizer] 获取模型列表失败:', error);
+    showToast('error', '获取模型列表失败，请检查API设置和网络连接。');
+    return [];
+  }
 }
 
 export async function testApiConnection(): Promise<boolean> {

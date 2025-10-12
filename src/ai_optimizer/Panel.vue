@@ -293,7 +293,7 @@ onUnmounted(() => {
 }
 .button-group {
   display: flex;
-  flex-direction: row;
+  flex-wrap: wrap; /* 允许换行 */
   gap: 10px;
   align-items: center;
   margin: 10px 0;
