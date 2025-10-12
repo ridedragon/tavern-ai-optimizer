@@ -22,7 +22,7 @@ $(() => {
   // 2. 创建并挂载 Vue 设置面板
   const $appContainer = createScriptIdDiv();
   $('#extensions_settings2').append($appContainer);
-  
+
   app = createApp(Panel);
   app.mount($appContainer[0]);
 });
