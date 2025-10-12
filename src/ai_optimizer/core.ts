@@ -51,7 +51,10 @@ async function onGenerationEnded(messageId: number) {
 export async function checkMessageForDisabledWords(messageText: string): Promise<boolean> {
   const settings = await getSettings();
   const cleanedMessage = cleanTextWithRegex(messageText, settings);
-  const disabledWords = (settings.disabledWords || '').split(',').map(w => w.trim()).filter(Boolean);
+  const disabledWords = (settings.disabledWords || '')
+    .split(',')
+    .map(w => w.trim())
+    .filter(Boolean);
 
   if (disabledWords.length === 0) {
     return false;
@@ -67,28 +70,28 @@ export async function checkMessageForDisabledWords(messageText: string): Promise
  * 从文本中提取包含指定单词的句子。
  */
 function extractSentencesWithWords(text: string, words: string[]): string[] {
-    const sentences = text.match(/[^.!?。！？]+[.!?。！？]?/g) || [text];
-    const uniqueSentences = new Set<string>();
+  const sentences = text.match(/[^.!?。！？]+[.!?。！？]?/g) || [text];
+  const uniqueSentences = new Set<string>();
 
-    words.forEach(word => {
-        const escapedWord = word.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-        const regex = new RegExp(escapedWord, 'i');
-        sentences.forEach(sentence => {
-            if (regex.test(sentence)) {
-                let cleanedSentence = sentence.replace(/[\r\n]/g, ' ').trim();
-                cleanedSentence = cleanedSentence.replace(/\*/g, '');
-                cleanedSentence = cleanedSentence.replace(/^[\s"'“‘]+|[\s"'”’]+$/g, '').trim();
-                const ellipsisIndex = cleanedSentence.lastIndexOf('……');
-                if (ellipsisIndex !== -1 && ellipsisIndex + 2 < cleanedSentence.length) {
-                    cleanedSentence = cleanedSentence.substring(ellipsisIndex + 2);
-                }
-                cleanedSentence = cleanedSentence.replace(/^[\s"'“‘]+/, '').trim();
-                uniqueSentences.add(cleanedSentence);
-            }
-        });
+  words.forEach(word => {
+    const escapedWord = word.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(escapedWord, 'i');
+    sentences.forEach(sentence => {
+      if (regex.test(sentence)) {
+        let cleanedSentence = sentence.replace(/[\r\n]/g, ' ').trim();
+        cleanedSentence = cleanedSentence.replace(/\*/g, '');
+        cleanedSentence = cleanedSentence.replace(/^[\s"'“‘]+|[\s"'”’]+$/g, '').trim();
+        const ellipsisIndex = cleanedSentence.lastIndexOf('……');
+        if (ellipsisIndex !== -1 && ellipsisIndex + 2 < cleanedSentence.length) {
+          cleanedSentence = cleanedSentence.substring(ellipsisIndex + 2);
+        }
+        cleanedSentence = cleanedSentence.replace(/^[\s"'“‘]+/, '').trim();
+        uniqueSentences.add(cleanedSentence);
+      }
     });
+  });
 
-    return Array.from(uniqueSentences);
+  return Array.from(uniqueSentences);
 }
 
 /**
@@ -100,7 +103,10 @@ function cleanTextWithRegex(text: string, settings: Settings): string {
     return text;
   }
 
-  const regexLines = regexFilters.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  const regexLines = regexFilters
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
   let cleanedText = text;
 
   for (const line of regexLines) {
@@ -122,15 +128,13 @@ function cleanTextWithRegex(text: string, settings: Settings): string {
 }
 
 function getSystemPrompt(settings: Settings): string {
-  const disabledWords = (settings.disabledWords || '').split(',').map((w: string) => w.trim()).filter(Boolean);
+  const disabledWords = (settings.disabledWords || '')
+    .split(',')
+    .map((w: string) => w.trim())
+    .filter(Boolean);
   const { main, system, final_system } = settings.promptSettings;
 
-  return [
-    main,
-    system,
-    `必须避免使用这些词：[${disabledWords.join(', ')}]`,
-    final_system,
-  ].filter(Boolean).join('\n');
+  return [main, system, `必须避免使用这些词：[${disabledWords.join(', ')}]`, final_system].filter(Boolean).join('\n');
 }
 
 /**
@@ -155,7 +159,11 @@ export async function optimizeText(textToOptimize: string, prompt: string): Prom
 /**
  * 替换消息中的句子。
  */
-export async function replaceMessage(originalContent: string, optimizedContent: string, callback: (newContent: string) => void) {
+export async function replaceMessage(
+  originalContent: string,
+  optimizedContent: string,
+  callback: (newContent: string) => void,
+) {
   const lastMessageId = await getLastMessageId();
   const messages = await getChatMessages(lastMessageId);
   if (!messages || messages.length === 0) {
@@ -164,7 +172,10 @@ export async function replaceMessage(originalContent: string, optimizedContent: 
   }
   const lastCharMessage = messages[0];
 
-  const originalSentences = originalContent.split('\n').map(s => s.replace(/^\d+[.)]\s*/, '').trim()).filter(Boolean);
+  const originalSentences = originalContent
+    .split('\n')
+    .map(s => s.replace(/^\d+[.)]\s*/, '').trim())
+    .filter(Boolean);
   const optimizedSentences = (optimizedContent.match(/\d+[.)]\s*.*?(?=\s*\d+[.)]|$)/g) || [])
     .map(s => s.replace(/^\d+[.)]\s*/, '').trim())
     .filter(Boolean);
@@ -172,24 +183,24 @@ export async function replaceMessage(originalContent: string, optimizedContent: 
   let modifiedMessage = lastCharMessage.message;
 
   if (originalSentences.length !== optimizedSentences.length) {
-      showToast('warning', 'AI返回的句子数量与原始数量不匹配，将尝试整体替换。');
-      const firstSentence = originalSentences[0];
-      if (modifiedMessage.includes(firstSentence)) {
-        modifiedMessage = modifiedMessage.replace(firstSentence, optimizedContent);
-        for (let i = 1; i < originalSentences.length; i++) {
-            modifiedMessage = modifiedMessage.replace(originalSentences[i], '');
-        }
-      } else {
-        showToast('error', '找不到原始句子的起始位置，无法执行替换。');
-        return;
+    showToast('warning', 'AI返回的句子数量与原始数量不匹配，将尝试整体替换。');
+    const firstSentence = originalSentences[0];
+    if (modifiedMessage.includes(firstSentence)) {
+      modifiedMessage = modifiedMessage.replace(firstSentence, optimizedContent);
+      for (let i = 1; i < originalSentences.length; i++) {
+        modifiedMessage = modifiedMessage.replace(originalSentences[i], '');
       }
+    } else {
+      showToast('error', '找不到原始句子的起始位置，无法执行替换。');
+      return;
+    }
   } else {
-      originalSentences.forEach((original, index) => {
-          const optimized = optimizedSentences[index];
-          if (optimized) {
-            modifiedMessage = modifiedMessage.replace(original, optimized);
-          }
-      });
+    originalSentences.forEach((original, index) => {
+      const optimized = optimizedSentences[index];
+      if (optimized) {
+        modifiedMessage = modifiedMessage.replace(original, optimized);
+      }
+    });
   }
 
   callback(modifiedMessage); // 更新UI上的测试文本框
@@ -215,7 +226,10 @@ export async function manualOptimize(callback: (content: string) => void) {
   const messageText = lastCharMessage.message;
 
   const cleanedMessage = cleanTextWithRegex(messageText, settings);
-  const disabledWords = (settings.disabledWords || '').split(',').map(w => w.trim()).filter(Boolean);
+  const disabledWords = (settings.disabledWords || '')
+    .split(',')
+    .map(w => w.trim())
+    .filter(Boolean);
 
   if (disabledWords.length === 0) {
     showToast('warning', '未设置禁用词，无法提取。');
@@ -243,14 +257,14 @@ export async function handleFullAutoOptimize() {
     showToast('info', '自动化优化流程已启动...');
     const settings = await getSettings();
 
-    const sourceContent: string = await new Promise((resolve) => {
+    const sourceContent: string = await new Promise(resolve => {
       manualOptimize(resolve);
     });
 
     if (!sourceContent) {
       return;
     }
-    
+
     const systemPrompt = getSystemPrompt(settings);
     const optimizedResultText = await optimizeText(sourceContent, systemPrompt);
 
@@ -260,7 +274,6 @@ export async function handleFullAutoOptimize() {
 
     await replaceMessage(sourceContent, optimizedResultText, () => {});
     showToast('success', '自动优化完成！');
-
   } catch (error: any) {
     console.error('[Auto Optimizer] 流程执行出错:', error);
     showToast('error', error.message);
@@ -279,20 +292,20 @@ export async function getLastCharMessage(): Promise<string> {
 // 模拟旧扩展的 API 调用函数，以便 Panel.vue 可以使用
 // 在新架构中，我们直接使用 `generate`，但为了兼容 Panel.vue 的结构，我们保留这些。
 export async function fetchModelsFromApi(): Promise<string[]> {
-    // 酒馆助手没有直接获取模型列表的 API，此功能暂时无法完美实现。
-    // 我们可以返回一个预设列表或让用户手动输入。
-    showToast('info', '酒馆助手脚本模式下无法自动获取模型列表。');
-    return ['gpt-4', 'gpt-3.5-turbo', 'claude-3-opus-20240229', 'gemini-pro'];
+  // 酒馆助手没有直接获取模型列表的 API，此功能暂时无法完美实现。
+  // 我们可以返回一个预设列表或让用户手动输入。
+  showToast('info', '酒馆助手脚本模式下无法自动获取模型列表。');
+  return ['gpt-4', 'gpt-3.5-turbo', 'claude-3-opus-20240229', 'gemini-pro'];
 }
 
 export async function testApiConnection(): Promise<boolean> {
-    // 我们可以通过一次简单的生成来测试连接
-    try {
-        await generate({ user_input: 'test', max_chat_history: 0 });
-        showToast('success', 'API 连接成功！');
-        return true;
-    } catch (error) {
-        showToast('error', 'API 连接失败。');
-        return false;
-    }
+  // 我们可以通过一次简单的生成来测试连接
+  try {
+    await generate({ user_input: 'test', max_chat_history: 0 });
+    showToast('success', 'API 连接成功！');
+    return true;
+  } catch (error) {
+    showToast('error', 'API 连接失败。');
+    return false;
+  }
 }
