@@ -41,7 +41,12 @@
         </div>
         <div class="block">
           <label>API URL</label>
-          <input v-model="settings.apiUrl" class="text_pole" type="text" placeholder="例如: https://api.openai.com/v1" />
+          <input
+            v-model="settings.apiUrl"
+            class="text_pole"
+            type="text"
+            placeholder="例如: https://api.openai.com/v1"
+          />
         </div>
         <div class="block">
           <label>API 密钥</label>
@@ -50,8 +55,8 @@
         <div class="button-group">
           <button class="menu_button" @click="handleTestConnection">测试连接</button>
           <button class="menu_button" @click="fetchModels">获取模型</button>
-          <span v-if="connectionStatus === 'success'" style="color: green;">连接成功！</span>
-          <span v-if="connectionStatus === 'error'" style="color: red;">连接失败。</span>
+          <span v-if="connectionStatus === 'success'" style="color: green">连接成功！</span>
+          <span v-if="connectionStatus === 'error'" style="color: red">连接失败。</span>
         </div>
         <div class="block">
           <label>模型名称</label>
@@ -140,8 +145,16 @@ import { getSettings, saveSettings, defaultSettings, Settings } from './settings
 // 核心逻辑将在下一个步骤中创建
 // import { fetchModelsFromApi, testApiConnection, manualOptimize, optimizeText, replaceMessage, getLastCharMessage, checkMessageForDisabledWords } from './core';
 
-import { fetchModelsFromApi, testApiConnection, manualOptimize, optimizeText, replaceMessage, getLastCharMessage, checkMessageForDisabledWords, handleFullAutoOptimize } from './core';
-
+import {
+  fetchModelsFromApi,
+  testApiConnection,
+  manualOptimize,
+  optimizeText,
+  replaceMessage,
+  getLastCharMessage,
+  checkMessageForDisabledWords,
+  handleFullAutoOptimize,
+} from './core';
 
 const settings = ref<Settings>(defaultSettings);
 const modelList = ref<string[]>([]);
@@ -155,9 +168,13 @@ let messagePollingInterval: number | undefined;
 let lastProcessedMessage = ref('');
 
 // 监听设置变化并保存
-watch(settings, (newSettings) => {
-  saveSettings(newSettings);
-}, { deep: true });
+watch(
+  settings,
+  newSettings => {
+    saveSettings(newSettings);
+  },
+  { deep: true },
+);
 
 // 监听最后一条角色消息的变化，以触发自动优化
 watch(lastCharMessageContent, (newMessage, oldMessage) => {
@@ -177,13 +194,9 @@ const handleReplaceMessage = () => {
     toastr.warning('“待优化内容”和“优化后内容”都不能为空。');
     return;
   }
-  replaceMessage(
-    optimizedContent.value,
-    optimizedResult.value,
-    (newContent: string) => {
-      modifiedMessage.value = newContent;
-    },
-  );
+  replaceMessage(optimizedContent.value, optimizedResult.value, (newContent: string) => {
+    modifiedMessage.value = newContent;
+  });
 };
 
 const handleOptimize = async () => {
@@ -217,7 +230,6 @@ const fetchModels = async () => {
     toastr.error('获取模型时发生未知错误。');
   }
 };
-
 
 const handleTestConnection = async () => {
   connectionStatus.value = 'unknown';
