@@ -9,16 +9,16 @@
         <!-- 生成设置 -->
         <b>生成设置</b>
         <div class="block">
-          <label>Temperature ({{ settings.temperature }})</label>
-          <CustomSlider v-model="settings.temperature" :min="0" :max="2" :step="0.01" class="text_pole" />
+          <label>Temperature</label>
+          <input v-model.number="settings.temperature" class="text_pole" type="number" step="0.01" />
         </div>
         <div class="block">
           <label>Max Tokens</label>
           <input v-model.number="settings.max_tokens" class="text_pole" type="number" />
         </div>
         <div class="block">
-          <label>Top P ({{ settings.top_p }})</label>
-          <CustomSlider v-model="settings.top_p" :min="0" :max="1" :step="0.01" class="text_pole" />
+          <label>Top P</label>
+          <input v-model.number="settings.top_p" class="text_pole" type="number" step="0.01" />
         </div>
         <div class="block">
           <label>Top K</label>
@@ -139,7 +139,6 @@
 </template>
 
 <script setup lang="ts">
-import CustomSlider from './components/CustomSlider.vue';
 import { useSettingsStore } from './store/settings';
 import { storeToRefs } from 'pinia';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
