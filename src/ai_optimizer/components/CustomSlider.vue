@@ -39,7 +39,7 @@ function updateValueFromPosition(clientX: number) {
 
   const rect = sliderRef.value.getBoundingClientRect();
   const newPercentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  
+
   let rawValue = props.min + newPercentage * (props.max - props.min);
 
   // Snap to the nearest step
@@ -108,7 +108,7 @@ onUnmounted(() => {
 
 .track-fill {
   height: 100%;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   border-radius: 2px;
 }
 
@@ -117,10 +117,10 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   background-color: #f1f1f1;
-  border: 2px solid #4CAF50;
+  border: 2px solid #4caf50;
   border-radius: 50%;
   transform: translateX(-50%); /* Center the thumb over the track-fill end */
   z-index: 1;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 </style>
