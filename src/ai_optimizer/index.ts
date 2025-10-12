@@ -37,22 +37,23 @@ function waitForTavern() {
   });
 }
 
-
 // 当 DOM 加载完成时执行
 $(() => {
-  waitForTavern().then(() => {
-    // 1. 初始化核心逻辑
-    initialize();
+  waitForTavern()
+    .then(() => {
+      // 1. 初始化核心逻辑
+      initialize();
 
-    // 2. 创建并挂载 Vue 设置面板
-    const $appContainer = createScriptIdDiv();
-    $('#extensions_settings2').append($appContainer);
-    
-    app = createApp(Panel);
-    app.mount($appContainer[0]);
-  }).catch(error => {
-    console.error('[AI Optimizer] Initialization failed:', error);
-  });
+      // 2. 创建并挂载 Vue 设置面板
+      const $appContainer = createScriptIdDiv();
+      $('#extensions_settings2').append($appContainer);
+
+      app = createApp(Panel);
+      app.mount($appContainer[0]);
+    })
+    .catch(error => {
+      console.error('[AI Optimizer] Initialization failed:', error);
+    });
 });
 
 // 当脚本卸载时执行清理
