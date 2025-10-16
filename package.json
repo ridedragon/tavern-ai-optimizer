@@ -40,6 +40,10 @@
     "mini-css-extract-plugin": "^2.9.4",
     "postcss": "^8.5.6",
     "postcss-cli": "^11.0.1",
+<<<<<<< HEAD
+=======
+    "postcss-load-config": "^6.0.1",
+>>>>>>> bb1431d21ba9d41ecbbc008a9cc9c83b3a1d4fbb
     "postcss-loader": "^8.2.0",
     "postcss-minify": "^1.2.0",
     "prettier": "^3.6.2",
