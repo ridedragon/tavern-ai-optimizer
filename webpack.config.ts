@@ -30,10 +30,60 @@ interface Entry {
   html?: string;
 }
 
+<<<<<<< HEAD
 
 const config: Config = {
   port: 6621,
   entries: [{ script: 'src/ai_optimizer/index.ts' }],
+=======
+function parse_entry(script_file: string) {
+  const html = path.join(path.dirname(script_file), 'index.html');
+  if (fs.existsSync(html)) {
+    return { script: script_file, html };
+  }
+  return { script: script_file };
+}
+
+function common_path(lhs: string, rhs: string) {
+  const lhs_parts = lhs.split(path.sep);
+  const rhs_parts = rhs.split(path.sep);
+  for (let i = 0; i < Math.min(lhs_parts.length, rhs_parts.length); i++) {
+    if (lhs_parts[i] !== rhs_parts[i]) {
+      return lhs_parts.slice(0, i).join(path.sep);
+    }
+  }
+  return lhs_parts.join(path.sep);
+}
+
+function glob_script_files() {
+  const files: string[] = fs
+    .globSync(`src/**/index.{ts,js}`)
+    .filter(file => process.env.CI !== 'true' || !fs.readFileSync(path.join(__dirname, file)).includes('@no-ci'));
+
+  const results: string[] = [];
+  const handle = (file: string) => {
+    const file_dirname = path.dirname(file);
+    for (const [index, result] of results.entries()) {
+      const result_dirname = path.dirname(result);
+      const common = common_path(result_dirname, file_dirname);
+      if (common === result_dirname) {
+        return;
+      }
+      if (common === file_dirname) {
+        results.splice(index, 1, file);
+        return;
+      }
+    }
+    results.push(file);
+  };
+  files.forEach(handle);
+  return results;
+}
+
+const config: Config = {
+  port: 6621,
+  entries: glob_script_files().map(parse_entry),
+>>>>>>> f520e0edc6dceb504cb6622b30bad047453c3dd5
 };
 
 let io: Server;
@@ -86,7 +136,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return `${is_direct === true ? 'src' : 'webpack'}://${info.namespace}/${resource_path}${is_direct || is_vue_script ? '' : '?' + info.hash}`;
       },
       filename: `${script_filepath.name}.js`,
+<<<<<<< HEAD
       path: path.join(__dirname, 'dist'),
+=======
+      path: path.join(__dirname, 'dist', path.relative(path.join(__dirname, 'src'), script_filepath.dir)),
+>>>>>>> f520e0edc6dceb504cb6622b30bad047453c3dd5
       chunkFilename: `${script_filepath.name}.[contenthash].chunk.js`,
       asyncChunks: true,
       clean: true,
@@ -308,14 +362,24 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             'pinia',
             '@vueuse/core',
             { from: 'dedent', imports: [['default', 'dedent']] },
+<<<<<<< HEAD
+=======
+            { from: 'klona', imports: ['klona'] },
+            { from: 'vue-final-modal', imports: ['useModal'] },
+>>>>>>> f520e0edc6dceb504cb6622b30bad047453c3dd5
             { from: 'zod', imports: ['z'] },
           ],
         }),
         unpluginVueComponents({
           dts: true,
           syncMode: 'overwrite',
+<<<<<<< HEAD
           resolvers: [VueUseComponentsResolver(), VueUseDirectiveResolver()],
           // globs: ['src/panel/component/*.vue'],
+=======
+          // globs: ['src/panel/component/*.vue'],
+          resolvers: [VueUseComponentsResolver(), VueUseDirectiveResolver()],
+>>>>>>> f520e0edc6dceb504cb6622b30bad047453c3dd5
         }),
         new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
         new webpack.DefinePlugin({
