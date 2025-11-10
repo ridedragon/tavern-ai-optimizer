@@ -23,6 +23,10 @@
     "checkJs": false,
     "sourceMap": true,
     "strict": true,
+<<<<<<< HEAD
+=======
+    "jsx": "react-jsx",
+>>>>>>> 5222cd67a858e8df734db29241ac1f211ca14bca
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
