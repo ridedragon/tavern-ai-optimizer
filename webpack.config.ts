@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
@@ -5,6 +6,17 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import url from 'node:url';
+=======
+import { FSWatcher, watch } from 'chokidar';
+import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import _ from 'lodash';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import { ChildProcess, exec, spawn } from 'node:child_process';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
 import RemarkHTML from 'remark-html';
 import { Server } from 'socket.io';
 import TerserPlugin from 'terser-webpack-plugin';
@@ -18,9 +30,12 @@ import WebpackObfuscator from 'webpack-obfuscator';
 const require = createRequire(import.meta.url);
 const HTMLInlineCSSWebpackPlugin = require('html-inline-css-webpack-plugin').default;
 
+<<<<<<< HEAD
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+=======
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
 interface Config {
   port: number;
   entries: Entry[];
@@ -30,6 +45,7 @@ interface Entry {
   html?: string;
 }
 
+<<<<<<< HEAD
 
 const config: Config = {
   port: 6621,
@@ -38,40 +54,191 @@ const config: Config = {
 
 let io: Server;
 function watch_it(compiler: webpack.Compiler) {
+=======
+function parse_entry(script_file: string) {
+  const html = path.join(path.dirname(script_file), 'index.html');
+  if (fs.existsSync(html)) {
+    return { script: script_file, html };
+  }
+  return { script: script_file };
+}
+
+function common_path(lhs: string, rhs: string) {
+  const lhs_parts = lhs.split(path.sep);
+  const rhs_parts = rhs.split(path.sep);
+  for (let i = 0; i < Math.min(lhs_parts.length, rhs_parts.length); i++) {
+    if (lhs_parts[i] !== rhs_parts[i]) {
+      return lhs_parts.slice(0, i).join(path.sep);
+    }
+  }
+  return lhs_parts.join(path.sep);
+}
+
+function glob_script_files() {
+  const files: string[] = fs
+    .globSync(`src/**/index.{ts,tsx,js,jsx}`)
+    .filter(
+      file => process.env.CI !== 'true' || !fs.readFileSync(path.join(import.meta.dirname, file)).includes('@no-ci'),
+    );
+
+  const results: string[] = [];
+  const handle = (file: string) => {
+    const file_dirname = path.dirname(file);
+    for (const [index, result] of results.entries()) {
+      const result_dirname = path.dirname(result);
+      const common = common_path(result_dirname, file_dirname);
+      if (common === result_dirname) {
+        return;
+      }
+      if (common === file_dirname) {
+        results.splice(index, 1, file);
+        return;
+      }
+    }
+    results.push(file);
+  };
+  files.forEach(handle);
+  return results;
+}
+
+const config: Config = {
+  port: 6621,
+  entries: glob_script_files().map(parse_entry),
+};
+
+let io: Server;
+function watch_tavern_helper(compiler: webpack.Compiler) {
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
   if (compiler.options.watch) {
     if (!io) {
       const port = config.port ?? 6621;
       io = new Server(port, { cors: { origin: '*' } });
+<<<<<<< HEAD
       console.info(`[Listener] 已启动酒馆监听服务, 正在监听: http://0.0.0.0:${port}`);
       io.on('connect', socket => {
         console.info(`[Listener] 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
         socket.on('disconnect', reason => {
           console.info(`[Listener] 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
+=======
+      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务, 正在监听: http://0.0.0.0:${port}`);
+      io.on('connect', socket => {
+        console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
+        io.emit('iframe_updated');
+        socket.on('disconnect', reason => {
+          console.info(`\x1b[36m[tavern_helper]\x1b[0m 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
         });
       });
     }
 
+<<<<<<< HEAD
     compiler.hooks.done.tap('updater', () => {
       console.info('\n[Listener] 检测到完成编译, 推送更新事件...');
+=======
+    compiler.hooks.done.tap('watch_tavern_helper', () => {
+      console.info('\n\x1b[36m[tavern_helper]\x1b[0m 检测到完成编译, 推送更新事件...');
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
       io.emit('iframe_updated');
     });
   }
 }
 
+<<<<<<< HEAD
 function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Configuration {
   const should_obfuscate = fs.readFileSync(path.join(__dirname, entry.script), 'utf-8').includes('@obfuscate');
+=======
+let watcher: FSWatcher;
+const execute = () => {
+  exec('pnpm dump', { cwd: import.meta.dirname });
+  console.info('\x1b[36m[schema_dump]\x1b[0m 已将所有 schema.ts 转换为 schema.json');
+};
+const execute_debounced = _.debounce(execute, 500, { leading: true, trailing: false });
+function dump_schema(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    execute_debounced();
+  } else if (!watcher) {
+    watcher = watch('src', {
+      awaitWriteFinish: true,
+    }).on('all', (_event, path) => {
+      if (path.endsWith('schema.ts')) {
+        execute_debounced();
+      }
+    });
+  }
+}
+
+let child_process: ChildProcess;
+function watch_tavern_sync(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    return;
+  }
+  compiler.hooks.watchRun.tap('watch_tavern_sync', () => {
+    if (!child_process) {
+      child_process = spawn('pnpm', ['sync', 'watch', 'all', '-f'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        cwd: import.meta.dirname,
+        env: { ...process.env, FORCE_COLOR: '1' },
+      });
+      child_process.stdout?.on('data', (data: Buffer) => {
+        console.info(
+          data
+            .toString()
+            .trimEnd()
+            .split('\n')
+            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
+            .join('\n'),
+        );
+      });
+      child_process.stderr?.on('data', (data: Buffer) => {
+        console.error(
+          data
+            .toString()
+            .trimEnd()
+            .split('\n')
+            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
+            .join('\n'),
+        );
+      });
+      child_process.on('error', error => {
+        console.error(`\x1b[31m[tavern_sync]\x1b[0m Error: ${error.message}`);
+      });
+    }
+  });
+  compiler.hooks.watchClose.tap('watch_tavern_sync', () => {
+    child_process?.kill();
+  });
+  ['SIGINT', 'SIGTERM'].forEach(signal => {
+    process.on(signal, () => {
+      child_process?.kill();
+    });
+  });
+}
+
+function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Configuration {
+  const should_obfuscate = fs
+    .readFileSync(path.join(import.meta.dirname, entry.script), 'utf-8')
+    .includes('@obfuscate');
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
   const script_filepath = path.parse(entry.script);
 
   return (_env, argv) => ({
     experiments: {
       outputModule: true,
     },
+<<<<<<< HEAD
     devtool: argv.mode === 'production' ? false : 'eval-source-map',
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },
     entry: path.join(__dirname, entry.script),
+=======
+    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
+    watchOptions: {
+      ignored: ['**/dist', '**/node_modules'],
+    },
+    entry: path.join(import.meta.dirname, entry.script),
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
     target: 'browserslist',
     output: {
       devtoolNamespace: 'tavern_helper_template',
@@ -86,7 +253,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return `${is_direct === true ? 'src' : 'webpack'}://${info.namespace}/${resource_path}${is_direct || is_vue_script ? '' : '?' + info.hash}`;
       },
       filename: `${script_filepath.name}.js`,
+<<<<<<< HEAD
       path: path.join(__dirname, 'dist'),
+=======
+      path: path.join(
+        import.meta.dirname,
+        'dist',
+        path.relative(path.join(import.meta.dirname, 'src'), script_filepath.dir),
+      ),
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
       chunkFilename: `${script_filepath.name}.[contenthash].chunk.js`,
       asyncChunks: true,
       clean: true,
@@ -208,7 +383,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             },
           ].concat(
             entry.html === undefined
+<<<<<<< HEAD
               ? <any[]>[
+=======
+              ? ([
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
                   {
                     test: /\.vue\.s(a|c)ss$/,
                     use: [
@@ -243,8 +422,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                     use: ['style-loader', { loader: 'css-loader', options: { url: false } }, 'postcss-loader'],
                     exclude: /node_modules/,
                   },
+<<<<<<< HEAD
                 ]
               : <any[]>[
+=======
+                ] as any[])
+              : ([
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
                   {
                     test: /\.s(a|c)ss$/,
                     use: [
@@ -264,7 +448,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                     ],
                     exclude: /node_modules/,
                   },
+<<<<<<< HEAD
                 ],
+=======
+                ] as any[]),
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
           ),
         },
       ],
@@ -274,7 +462,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       plugins: [
         new TsconfigPathsPlugin({
           extensions: ['.ts', '.js', '.tsx', '.jsx'],
+<<<<<<< HEAD
           configFile: path.join(__dirname, 'tsconfig.json'),
+=======
+          configFile: path.join(import.meta.dirname, 'tsconfig.json'),
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
         }),
       ],
       alias: {},
@@ -283,7 +475,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       ? [new MiniCssExtractPlugin()]
       : [
           new HtmlWebpackPlugin({
+<<<<<<< HEAD
             template: path.join(__dirname, entry.html),
+=======
+            template: path.join(import.meta.dirname, entry.html),
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
             filename: path.parse(entry.html).base,
             scriptLoading: 'module',
             cache: false,
@@ -298,7 +494,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         ]
     )
       .concat(
+<<<<<<< HEAD
         { apply: watch_it },
+=======
+        { apply: watch_tavern_helper },
+        { apply: dump_schema },
+        { apply: watch_tavern_sync },
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
         new VueLoaderPlugin(),
         unpluginAutoImport({
           dts: true,
@@ -308,14 +510,24 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             'pinia',
             '@vueuse/core',
             { from: 'dedent', imports: [['default', 'dedent']] },
+<<<<<<< HEAD
+=======
+            { from: 'klona', imports: ['klona'] },
+            { from: 'vue-final-modal', imports: ['useModal'] },
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
             { from: 'zod', imports: ['z'] },
           ],
         }),
         unpluginVueComponents({
           dts: true,
           syncMode: 'overwrite',
+<<<<<<< HEAD
           resolvers: [VueUseComponentsResolver(), VueUseDirectiveResolver()],
           // globs: ['src/panel/component/*.vue'],
+=======
+          // globs: ['src/panel/component/*.vue'],
+          resolvers: [VueUseComponentsResolver(), VueUseDirectiveResolver()],
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
         }),
         new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
         new webpack.DefinePlugin({
@@ -333,6 +545,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 selfDefending: true,
                 simplify: true,
                 splitStrings: true,
+<<<<<<< HEAD
+=======
+                seed: 1,
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
               }),
             ]
           : [],
@@ -385,6 +601,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         request.startsWith('/') ||
         request.startsWith('!') ||
         request.startsWith('http') ||
+<<<<<<< HEAD
+=======
+        request.startsWith('@/') ||
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
         path.isAbsolute(request) ||
         fs.existsSync(path.join(context, request)) ||
         fs.existsSync(request)
@@ -399,9 +619,19 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (argv.mode !== 'production' && ['vue', 'pixi'].some(key => request.includes(key))) {
         return callback();
       }
+<<<<<<< HEAD
       const global = {
         jquery: '$',
         lodash: '_',
+=======
+      if (['react'].some(key => request.includes(key))) {
+        return callback();
+      }
+      const global = {
+        jquery: '$',
+        lodash: '_',
+        showdown: 'showdown',
+>>>>>>> a769e68fbf6275d9810700842203a0d57ac9c157
         toastr: 'toastr',
         vue: 'Vue',
         'vue-router': 'VueRouter',
