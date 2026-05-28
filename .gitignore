@@ -1,1 +1,17 @@
+<<<<<<< HEAD
 /node_modules
+=======
+node_modules
+
+.DS_Store
+Thumbs.db
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+auto-imports.d.ts
+components.d.ts
+>>>>>>> 6dc4e35995d4d180a1cd4ff223ac9d21f083e2f5
